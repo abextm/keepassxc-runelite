@@ -1,5 +1,6 @@
 package abex.os.keepassxc.proto;
 
+import abex.os.keepassxc.proto.path.ProxyPathResolver;
 import com.google.common.io.LittleEndianDataInputStream;
 import com.google.common.io.LittleEndianDataOutputStream;
 import com.google.gson.Gson;
@@ -55,8 +56,12 @@ public class KeePassXCSocket implements Closeable
 
 	public KeePassXCSocket() throws IOException
 	{
+		String keepassProxyPath = ProxyPathResolver.getKeepassProxyPath();
+		if (keepassProxyPath == null)
+			throw KeePassException.create(0, "Could not locate keepass-proxy.");
+
 		ProcessBuilder pb = new ProcessBuilder();
-		pb.command("keepassxc-proxy");
+		pb.command(keepassProxyPath);
 		pb.redirectInput(ProcessBuilder.Redirect.PIPE);
 		pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
 		proc = pb.start();
