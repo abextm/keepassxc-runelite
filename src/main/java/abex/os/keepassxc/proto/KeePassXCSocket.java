@@ -5,24 +5,17 @@ import com.google.common.io.LittleEndianDataInputStream;
 import com.google.common.io.LittleEndianDataOutputStream;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
 import com.neilalexander.jnacl.NaCl;
 import com.neilalexander.jnacl.crypto.curve25519xsalsa20poly1305;
 import java.io.Closeable;
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.client.RuneLite;
 
 // this whole thing is a trainwreck
 // especially jnacl, which takes arguments in the wrong order, gives you the wrong output
@@ -50,15 +43,18 @@ public class KeePassXCSocket implements Closeable
 	private byte[] serverPublicKey;
 	private NaCl nacl;
 
-	private Map<String, Key> keyring = new HashMap<>();
+	private Keyring keyring;
 
 	private final SecureRandom secureRandom = new SecureRandom();
 
 	public KeePassXCSocket() throws IOException
 	{
+		keyring = new Keyring();
 		String keepassProxyPath = ProxyPathResolver.getKeepassProxyPath();
 		if (keepassProxyPath == null)
+		{
 			throw KeePassException.create(0, "Could not locate keepass-proxy.");
+		}
 
 		ProcessBuilder pb = new ProcessBuilder();
 		pb.command(keepassProxyPath);
@@ -205,56 +201,27 @@ public class KeePassXCSocket implements Closeable
 		return gson.fromJson(resStr, type);
 	}
 
-	protected File getKeyringFile()
+	public synchronized String getDatabaseHash()
 	{
-		return new File(RuneLite.RUNELITE_DIR, "keepassxc.keyring");
-	}
-
-	synchronized void ensureAssociate() throws IOException
-	{
-		GetDatabaseHash.Response hashRes = call(GetDatabaseHash.ACTION, new GetDatabaseHash.Request(), GetDatabaseHash.Response.class);
-		String hash = hashRes.getHash();
-		Key k = keyring.get(hash);
-		if (k != null)
-		{
-			try
-			{
-				call(TestAssociate.ACTION, TestAssociate.Request.builder()
-					.id(k.id)
-					.key(k.key)
-					.build(), TestAssociate.Response.class);
-				return;
-			}
-			catch (IOException e)
-			{
-				log.debug("", e);
-			}
-		}
 		try
 		{
-			keyring = gson.fromJson(new String(Files.readAllBytes(getKeyringFile().toPath()), StandardCharsets.UTF_8),
-				new TypeToken<Map<String, Key>>()
-				{
-				}.getType());
-			k = keyring.get(hash);
-			if (k != null)
-			{
-				call(TestAssociate.ACTION, TestAssociate.Request.builder()
-					.id(k.id)
-					.key(k.key)
-					.build(), TestAssociate.Response.class);
-				return;
-			}
+			GetDatabaseHash.Response hashResponse = call(GetDatabaseHash.ACTION, new GetDatabaseHash.Request(), GetDatabaseHash.Response.class);
+			return hashResponse.getHash();
 		}
 		catch (IOException e)
 		{
 			log.debug("", e);
+			return null;
 		}
+	}
 
+	public synchronized void associate(String dbHash) throws IOException
+	{
+		setDeadline(30000); // user will need to accept a prompt
 		byte[] id = new byte[KEY_SIZE];
 		secureRandom.nextBytes(id);
 
-		k = new Key();
+		Key k = new Key();
 		k.key = id;
 		k.id = call(Associate.ACTION, Associate.Request.builder()
 			.idKey(id)
@@ -262,14 +229,41 @@ public class KeePassXCSocket implements Closeable
 			.build(), Associate.Response.class)
 			.id;
 
-		keyring.put(hash, k);
-		Files.write(getKeyringFile().toPath(), gson.toJson(keyring).getBytes(StandardCharsets.UTF_8),
-			StandardOpenOption.CREATE_NEW, StandardOpenOption.TRUNCATE_EXISTING);
+		keyring.storeKey(dbHash, k);
+	}
+
+	synchronized boolean testAssociate(Key k) throws IOException
+	{
+		try
+		{
+			call(TestAssociate.ACTION, TestAssociate.Request.builder()
+				.id(k.id)
+				.key(k.key)
+				.build(), TestAssociate.Response.class);
+			return true;
+		}
+		catch (IOException e)
+		{
+			log.debug("", e);
+			return false;
+		}
+	}
+
+	public synchronized void ensureAssociate() throws IOException
+	{
+		String currentDbHash = getDatabaseHash();
+		Key currentDbKey = keyring.getKey(currentDbHash);
+		if (currentDbKey != null && testAssociate(currentDbKey))
+		{
+			return;
+		}
+
+		associate(currentDbHash);
 	}
 
 	public Collection<Key> getKeys()
 	{
-		return Collections.unmodifiableCollection(keyring.values());
+		return Collections.unmodifiableCollection(keyring.allKeys());
 	}
 
 	public void close() throws IOException
