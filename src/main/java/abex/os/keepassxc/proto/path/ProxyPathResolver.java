@@ -13,11 +13,15 @@ import net.runelite.client.util.OSType;
 import net.runelite.http.api.RuneLiteAPI;
 
 @Slf4j
-public abstract class ProxyPathResolver
+public class ProxyPathResolver
 {
 	private static final Pattern ENTRY_REGEX = Pattern.compile(" {4}\\(Default\\) {4}REG_SZ {4}(.*?)\\r?\\n", Pattern.MULTILINE);
 
 	private static String proxyPath;
+
+	private ProxyPathResolver()
+	{
+	}
 
 	public static String getKeepassProxyPath()
 	{

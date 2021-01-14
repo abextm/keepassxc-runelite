@@ -1,5 +1,9 @@
 package abex.os.keepassxc.proto;
 
+import abex.os.keepassxc.proto.msg.Associate;
+import abex.os.keepassxc.proto.msg.ChangePublicKeys;
+import abex.os.keepassxc.proto.msg.GetDatabaseHash;
+import abex.os.keepassxc.proto.msg.TestAssociate;
 import abex.os.keepassxc.proto.path.ProxyPathResolver;
 import com.google.common.io.LittleEndianDataInputStream;
 import com.google.common.io.LittleEndianDataOutputStream;
@@ -39,15 +43,14 @@ public class KeePassXCSocket implements Closeable
 		.registerTypeHierarchyAdapter(byte[].class, new Base64Adapter())
 		.create();
 
-	private Process proc;
-	private InterruptableInputStream stdoutInterrupt;
-	private LittleEndianDataOutputStream stdin;
-	private LittleEndianDataInputStream stdout;
+	private final Process proc;
+	private final InterruptableInputStream stdoutInterrupt;
+	private final LittleEndianDataOutputStream stdin;
+	private final LittleEndianDataInputStream stdout;
 
-	private byte[] clientID = new byte[ID_SIZE];
-	private byte[] privateKey = new byte[KEY_SIZE];
-	private byte[] publicKey = new byte[KEY_SIZE];
-	private byte[] serverPublicKey;
+	private final byte[] clientID = new byte[ID_SIZE];
+	private final byte[] publicKey = new byte[KEY_SIZE];
+
 	private NaCl nacl;
 
 	private Map<String, Key> keyring = new HashMap<>();
@@ -84,6 +87,7 @@ public class KeePassXCSocket implements Closeable
 
 	public void init() throws IOException
 	{
+		byte[] privateKey = new byte[KEY_SIZE];
 		secureRandom.nextBytes(clientID);
 		curve25519xsalsa20poly1305.crypto_box_keypair(publicKey, privateKey);
 
@@ -105,16 +109,16 @@ public class KeePassXCSocket implements Closeable
 			byte[] rs = new byte[stdout.readInt()];
 			stdout.readFully(rs);
 			ChangePublicKeys.Response r = gson.fromJson(new String(rs, StandardCharsets.UTF_8), ChangePublicKeys.Response.class);
-			if (!Arrays.equals(r.nonce, nonce))
+			if (!Arrays.equals(r.getNonce(), nonce))
 			{
-				throw new IOException("Incorrect nonce: " + Arrays.toString(r.nonce) + " != " + Arrays.toString(nonce));
+				throw new IOException("Incorrect nonce: " + Arrays.toString(r.getNonce()) + " != " + Arrays.toString(nonce));
 			}
-			if (!r.success)
+			if (!r.isSuccess())
 			{
 				throw new IOException("success == false");
 			}
 
-			serverPublicKey = r.publicKey;
+			byte[] serverPublicKey = r.getPublicKey();
 			try
 			{
 				nacl = new NaCl(privateKey, serverPublicKey);
@@ -250,26 +254,34 @@ public class KeePassXCSocket implements Closeable
 		}
 		catch (IOException e)
 		{
-			log.debug("", e);
+			log.info("failed to read keyring", e);
 		}
 
 		// can block waiting for user input
 		clearDeadline();
 
-		byte[] id = new byte[KEY_SIZE];
-		secureRandom.nextBytes(id);
+		byte[] idKey = new byte[KEY_SIZE];
+		secureRandom.nextBytes(idKey);
 
-		k = new Key();
-		k.key = id;
-		k.id = call(Associate.ACTION, Associate.Request.builder()
-			.idKey(id)
-			.key(publicKey)
-			.build(), Associate.Response.class)
-			.id;
+		k = new Key(
+			idKey,
+			call(Associate.ACTION, Associate.Request.builder()
+				.idKey(idKey)
+				.key(publicKey)
+				.build(), Associate.Response.class)
+				.getId()
+		);
 
 		keyring.put(hash, k);
-		Files.write(getKeyringFile().toPath(), gson.toJson(keyring).getBytes(StandardCharsets.UTF_8),
-			StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+		try
+		{
+			Files.write(getKeyringFile().toPath(), gson.toJson(keyring).getBytes(StandardCharsets.UTF_8),
+				StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+		}
+		catch (IOException e)
+		{
+			log.info("failed to write keyring", e);
+		}
 	}
 
 	public Collection<Key> getKeys()

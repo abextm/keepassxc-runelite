@@ -1,7 +1,7 @@
 package abex.os.keepassxc;
 
 import abex.os.keepassxc.proto.DatabaseClosedException;
-import abex.os.keepassxc.proto.GetLogins;
+import abex.os.keepassxc.proto.msg.GetLogins;
 import abex.os.keepassxc.proto.IOTimeoutException;
 import abex.os.keepassxc.proto.KeePassXCSocket;
 import abex.os.keepassxc.proto.NoLoginsFound;

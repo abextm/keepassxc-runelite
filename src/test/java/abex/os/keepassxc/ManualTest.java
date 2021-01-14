@@ -1,6 +1,6 @@
 package abex.os.keepassxc;
 
-import abex.os.keepassxc.proto.GetLogins;
+import abex.os.keepassxc.proto.msg.GetLogins;
 import abex.os.keepassxc.proto.KeePassXCSocket;
 
 public class ManualTest

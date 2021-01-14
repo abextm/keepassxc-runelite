@@ -1,5 +1,6 @@
-package abex.os.keepassxc.proto;
+package abex.os.keepassxc.proto.msg;
 
+import abex.os.keepassxc.proto.Key;
 import java.util.Collection;
 import java.util.List;
 import lombok.Builder;

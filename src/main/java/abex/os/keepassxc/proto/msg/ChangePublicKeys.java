@@ -1,4 +1,4 @@
-package abex.os.keepassxc.proto;
+package abex.os.keepassxc.proto.msg;
 
 import lombok.Builder;
 import lombok.Data;
