@@ -253,6 +253,9 @@ public class KeePassXCSocket implements Closeable
 			log.debug("", e);
 		}
 
+		// can block waiting for user input
+		clearDeadline();
+
 		byte[] id = new byte[KEY_SIZE];
 		secureRandom.nextBytes(id);
 
@@ -266,7 +269,7 @@ public class KeePassXCSocket implements Closeable
 
 		keyring.put(hash, k);
 		Files.write(getKeyringFile().toPath(), gson.toJson(keyring).getBytes(StandardCharsets.UTF_8),
-			StandardOpenOption.CREATE_NEW, StandardOpenOption.TRUNCATE_EXISTING);
+			StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 	}
 
 	public Collection<Key> getKeys()
