@@ -58,17 +58,17 @@ public class ProxyPathResolver
 				File home = new File(System.getProperty("user.home"));
 				File config = new File(home, ".config");
 				File config2 = new File(home, "/etc/xdg");
-				return testManifest(new File(config, "/google-chrome/NativeMessagingHosts"))
-					|| testManifest(new File(config2, "/google-chrome/NativeMessagingHosts"))
-					|| testManifest(new File(home, "/.mozilla/native-messaging-hosts"))
-					|| testManifest(new File(config, "/chromium/NativeMessagingHosts"))
-					|| testManifest(new File(config2, "/chromium/NativeMessagingHosts"))
-					|| testManifest(new File(config, "/vivaldi/NativeMessagingHosts"))
-					|| testManifest(new File(config2, "/vivaldi/NativeMessagingHosts"))
-					|| testManifest(new File(config, "/BraveSoftware/Brave-Browser/NativeMessagingHosts"))
-					|| testManifest(new File(config2, "/BraveSoftware/Brave-Browser/NativeMessagingHosts"))
-					|| testManifest(new File(config, "/microsoftedge/NativeMessagingHosts"))
-					|| testManifest(new File(config2, "/microsoftedge/NativeMessagingHosts"));
+				return testManifestDir(new File(config, "/google-chrome/NativeMessagingHosts"))
+					|| testManifestDir(new File(config2, "/google-chrome/NativeMessagingHosts"))
+					|| testManifestDir(new File(home, "/.mozilla/native-messaging-hosts"))
+					|| testManifestDir(new File(config, "/chromium/NativeMessagingHosts"))
+					|| testManifestDir(new File(config2, "/chromium/NativeMessagingHosts"))
+					|| testManifestDir(new File(config, "/vivaldi/NativeMessagingHosts"))
+					|| testManifestDir(new File(config2, "/vivaldi/NativeMessagingHosts"))
+					|| testManifestDir(new File(config, "/BraveSoftware/Brave-Browser/NativeMessagingHosts"))
+					|| testManifestDir(new File(config2, "/BraveSoftware/Brave-Browser/NativeMessagingHosts"))
+					|| testManifestDir(new File(config, "/microsoftedge/NativeMessagingHosts"))
+					|| testManifestDir(new File(config2, "/microsoftedge/NativeMessagingHosts"));
 			}
 			case Windows:
 				return testWindowsBrowser("Google\\Chrome")
@@ -98,12 +98,16 @@ public class ProxyPathResolver
 
 	private static boolean testOSXBrowser(String name)
 	{
-		return testManifest(new File(System.getProperty("user.home"), "/Library/Application Support/" + name + "/NativeMessagingHosts"));
+		return testManifestDir(new File(System.getProperty("user.home"), "/Library/Application Support/" + name + "/NativeMessagingHosts"));
 	}
 
-	private static boolean testManifest(File nativeHostsPath)
+	private static boolean testManifestDir(File nativeHostsPath)
 	{
-		File manifestFile = new File(nativeHostsPath, "org.keepassxc.keepassxc_browser.json");
+		return testManifest(new File(nativeHostsPath, "org.keepassxc.keepassxc_browser.json"));
+	}
+
+	private static boolean testManifest(File manifestFile)
+	{
 		if (!manifestFile.exists())
 		{
 			return false;
@@ -144,7 +148,7 @@ public class ProxyPathResolver
 			Matcher m = ENTRY_REGEX.matcher(regOutput);
 			if (m.find())
 			{
-				return testPath(new File(m.group(1)));
+				return testManifest(new File(m.group(1)));
 			}
 			return false;
 		}
