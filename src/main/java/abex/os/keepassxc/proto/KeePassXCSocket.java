@@ -264,12 +264,12 @@ public class KeePassXCSocket implements Closeable
 		secureRandom.nextBytes(idKey);
 
 		k = new Key(
-			idKey,
 			call(Associate.ACTION, Associate.Request.builder()
 				.idKey(idKey)
 				.key(publicKey)
 				.build(), Associate.Response.class)
-				.getId()
+				.getId(),
+			idKey
 		);
 
 		keyring.put(hash, k);
