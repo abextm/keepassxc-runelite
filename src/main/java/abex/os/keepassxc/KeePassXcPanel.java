@@ -53,6 +53,7 @@ public class KeePassXcPanel extends PluginPanel
 		Thread t = new Thread(() ->
 		{
 			String message;
+			Throwable ex;
 			try (KeePassXCSocket sock = new KeePassXCSocket())
 			{
 				sock.setDeadline(500);
@@ -68,20 +69,24 @@ public class KeePassXcPanel extends PluginPanel
 			}
 			catch (NoLoginsFound e)
 			{
+				ex = e;
 				message = "No logins found for \"" + URL + "\"";
 			}
 			catch (DatabaseClosedException e)
 			{
+				ex = e;
 				message = "The database is locked";
 			}
 			catch (IOTimeoutException e)
 			{
+				ex = e;
 				message = "<html>Cannot connect to KeePassXC. Check that:<br>" +
 					"1) KeePassXC is open, and<br>" +
 					"2)<a href=\"https://github.com/abextm/keepassxc-runelite\">Browser Integration</a> is enabled<br>";
 			}
 			catch (IOException e)
 			{
+				ex = e;
 				message = e.toString();
 			}
 			catch (Throwable e)
@@ -89,6 +94,7 @@ public class KeePassXcPanel extends PluginPanel
 				log.warn("error connecting to KeePassXC", e);
 				return;
 			}
+			log.warn("error connecting to KeePassXC", ex);
 			SwingUtilities.invokeLater(() -> this.open(message));
 		}, "KeePassXCSocketConnection");
 

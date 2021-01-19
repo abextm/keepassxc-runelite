@@ -22,7 +22,7 @@ public class KeePassException extends IOException
 			case 15:
 				return new NoLoginsFound(code, message);
 			default:
-				return new KeePassException(code, message);
+				return new KeePassException(code, message + "(" + code + ")");
 		}
 	}
 }
