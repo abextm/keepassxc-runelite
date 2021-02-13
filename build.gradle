@@ -11,7 +11,7 @@ repositories {
 	mavenCentral()
 }
 
-def runeLiteVersion = '1.6.36.2'
+def runeLiteVersion = '1.7.0'
 
 dependencies {
 	implementation 'org.zeromq:jnacl:0.1.0'
