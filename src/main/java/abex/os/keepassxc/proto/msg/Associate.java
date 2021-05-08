@@ -20,6 +20,6 @@ public class Associate
 
 	@Data
 	public static class Response {
-		byte[] id;
+		String id;
 	}
 }

@@ -14,12 +14,11 @@ public class TestAssociate
 	public static class Request {
 		@Builder.Default
 		String action = ACTION;
-		byte[] id;
+		String id;
 		byte[] key;
 	}
 
 	@Data
 	public static class Response {
-		byte[] id;
 	}
 }

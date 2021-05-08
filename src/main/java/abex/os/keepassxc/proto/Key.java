@@ -9,6 +9,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Key
 {
-	byte[] id;
+	String id;
 	byte[] key;
 }
