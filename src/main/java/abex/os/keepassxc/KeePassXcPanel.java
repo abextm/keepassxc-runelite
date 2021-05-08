@@ -39,7 +39,7 @@ public class KeePassXcPanel extends PluginPanel
 		this.clientToolbar = clientToolbar;
 
 		this.button = NavigationButton.builder()
-			.icon(ImageUtil.getResourceStreamFromClass(KeePassXcPlugin.class, "icon.png"))
+			.icon(ImageUtil.loadImageResource(KeePassXcPlugin.class, "icon.png"))
 			.panel(this)
 			.priority(999)
 			.tooltip("KeePassXC")
