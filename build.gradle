@@ -4,14 +4,18 @@ plugins {
 }
 
 repositories {
-	//mavenLocal()
+	mavenLocal {
+		content {
+			includeGroup "net.runelite"
+		}
+	}
 	maven {
 		url = 'http://repo.runelite.net'
 	}
 	mavenCentral()
 }
 
-def runeLiteVersion = '1.7.0'
+def runeLiteVersion = '1.7.6'
 
 dependencies {
 	implementation 'org.zeromq:jnacl:0.1.0'
@@ -26,7 +30,7 @@ dependencies {
 }
 
 group = 'abex.autofill.keepassxc'
-version = '1.0.2'
+version = '1.0.3'
 sourceCompatibility = '1.8'
 
 tasks.withType(JavaCompile) {
