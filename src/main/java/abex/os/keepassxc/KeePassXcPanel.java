@@ -123,6 +123,7 @@ public class KeePassXcPanel extends PluginPanel
 
 	public void open(String error)
 	{
+		SwingUtil.fastRemoveAll(this);
 		setLayout(new BorderLayout());
 
 		JLabel titleLabel = new JLabel("KeePassXC");
