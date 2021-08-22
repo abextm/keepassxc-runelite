@@ -33,6 +33,9 @@ public class KeePassXcPanel extends PluginPanel
 	private final NavigationButton button;
 
 	@Inject
+	private KeePassXcConfig config;
+
+	@Inject
 	public KeePassXcPanel(Client client, ClientToolbar clientToolbar)
 	{
 		this.client = client;
@@ -107,8 +110,17 @@ public class KeePassXcPanel extends PluginPanel
 		SwingUtil.fastRemoveAll(this);
 		setLayout(new DynamicGridLayout(0, 1, 0, 0));
 		boolean hideUsernames = client.getPreferences().getHideUsername();
+
+		String defaultTitle = config.defaultTitle().trim();
+
 		for (GetLogins.Entry e : logins.getEntries())
 		{
+			if (!defaultTitle.isEmpty() && e.getName().trim().equalsIgnoreCase(defaultTitle))
+			{
+				client.setPassword(e.getPassword());
+				client.setUsername(e.getLogin());
+			}
+
 			String name = hideUsernames ? e.getName() : e.getLogin();
 			JButton b = new JButton(name);
 			b.addActionListener(_e ->
