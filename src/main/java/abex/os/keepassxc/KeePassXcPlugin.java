@@ -1,14 +1,16 @@
 package abex.os.keepassxc;
 
-import net.runelite.client.plugins.Plugin;
-import net.runelite.client.plugins.PluginDescriptor;
 import javax.inject.Inject;
 import javax.swing.SwingUtilities;
+import com.google.inject.Provides;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.client.callback.ClientThread;
+import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.plugins.Plugin;
+import net.runelite.client.plugins.PluginDescriptor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -22,6 +24,9 @@ public class KeePassXcPlugin extends Plugin
 
 	@Inject
 	private ClientThread clientThread;
+
+	@Inject
+	private KeePassXcConfig config;
 
 	private KeePassXcPanel panel;
 
@@ -39,6 +44,12 @@ public class KeePassXcPlugin extends Plugin
 	{
 		panel.close();
 		isTicking = false;
+	}
+
+	@Provides
+	KeePassXcConfig getConfig(ConfigManager configManager)
+	{
+		return configManager.getConfig(KeePassXcConfig.class);
 	}
 
 	private int lastLoginState = -1;
