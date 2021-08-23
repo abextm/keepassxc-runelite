@@ -8,13 +8,13 @@ import net.runelite.client.config.ConfigItem;
 public interface KeePassXcConfig extends Config
 {
 	@ConfigItem(
-			keyName = "defaultFirstEntry",
-			name = "Default to First Entry",
-			description = "Use the first login entry found in the database",
+			keyName = "defaultTitle",
+			name = "Default to Entry Title",
+			description = "The Title of the login Entry to auto-populate",
 			position = 1
 	)
-	default boolean defaultFirstEntry()
+	default String defaultTitle()
 	{
-		return false;
+		return "";
 	}
 }

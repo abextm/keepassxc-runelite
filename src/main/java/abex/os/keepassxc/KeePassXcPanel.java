@@ -111,17 +111,16 @@ public class KeePassXcPanel extends PluginPanel
 		setLayout(new DynamicGridLayout(0, 1, 0, 0));
 		boolean hideUsernames = client.getPreferences().getHideUsername();
 
-		if (config.defaultFirstEntry())
-		{
-			GetLogins.Entry e = logins.getEntries().get(0);
-			client.setPassword(e.getPassword());
-			client.setUsername(e.getLogin());
-			close();
-			return;
-		}
-
 		for (GetLogins.Entry e : logins.getEntries())
 		{
+			if (e.getName().equals(config.defaultTitle()))
+			{
+				client.setPassword(e.getPassword());
+				client.setUsername(e.getLogin());
+				close();
+				return;
+			}
+
 			String name = hideUsernames ? e.getName() : e.getLogin();
 			JButton b = new JButton(name);
 			b.addActionListener(_e ->
