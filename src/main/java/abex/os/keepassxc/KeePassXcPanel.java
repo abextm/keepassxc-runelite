@@ -113,12 +113,10 @@ public class KeePassXcPanel extends PluginPanel
 
 		for (GetLogins.Entry e : logins.getEntries())
 		{
-			if (e.getName().equals(config.defaultTitle()))
+			if (e.getName().equals(config.defaultTitle()) && config.autoPopulate())
 			{
 				client.setPassword(e.getPassword());
 				client.setUsername(e.getLogin());
-				close();
-				return;
 			}
 
 			String name = hideUsernames ? e.getName() : e.getLogin();
