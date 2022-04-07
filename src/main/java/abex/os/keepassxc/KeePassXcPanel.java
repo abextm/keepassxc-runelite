@@ -7,6 +7,8 @@ import abex.os.keepassxc.proto.KeePassXCSocket;
 import abex.os.keepassxc.proto.NoLoginsFound;
 import java.awt.BorderLayout;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import javax.inject.Inject;
 import javax.swing.JButton;
 import javax.swing.JLabel;
@@ -21,6 +23,7 @@ import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.PluginPanel;
 import net.runelite.client.util.ImageUtil;
 import net.runelite.client.util.SwingUtil;
+import net.runelite.client.ui.ClientUI;
 
 @Slf4j
 public class KeePassXcPanel extends PluginPanel
@@ -29,17 +32,21 @@ public class KeePassXcPanel extends PluginPanel
 
 	private final Client client;
 	private final ClientToolbar clientToolbar;
+	private final ClientUI clientUI;
 
 	private final NavigationButton button;
 
 	@Inject
 	private KeePassXcConfig config;
 
+	private int sidebarWidth = -1;
+
 	@Inject
-	public KeePassXcPanel(Client client, ClientToolbar clientToolbar)
+	public KeePassXcPanel(Client client, ClientToolbar clientToolbar, ClientUI clientUI)
 	{
 		this.client = client;
 		this.clientToolbar = clientToolbar;
+		this.clientUI = clientUI;
 
 		this.button = NavigationButton.builder()
 			.icon(ImageUtil.loadImageResource(KeePassXcPlugin.class, "icon.png"))
@@ -157,6 +164,7 @@ public class KeePassXcPanel extends PluginPanel
 	private void open()
 	{
 		revalidate();
+		sidebarWidth = clientUI.getWidth() - client.getCanvasWidth();
 		clientToolbar.addNavigation(button);
 		if (!button.isSelected())
 		{
@@ -169,5 +177,31 @@ public class KeePassXcPanel extends PluginPanel
 		// clientui doesn't unset selected if we close the panel by removing the navbutton
 		button.setSelected(false);
 		clientToolbar.removeNavigation(button);
+
+		if (config.restoreSidebarState())
+		{
+			try
+			{
+				Method m;
+				switch (sidebarWidth)
+				{
+					case 0: // sidebar was closed
+					m = clientUI.getClass().getDeclaredMethod("toggleSidebar");
+					m.setAccessible(true);
+					m.invoke(clientUI);
+					break;
+
+					case 36: // sidebar was contracted
+					m = clientUI.getClass().getDeclaredMethod("contract");
+					m.setAccessible(true);
+					m.invoke(clientUI);
+					break;
+				}
+			}
+			catch (IllegalAccessException | NoSuchMethodException | InvocationTargetException e)
+			{
+				log.warn("Couldn't modify the sidebar state");
+			}
+		}
 	}
 }

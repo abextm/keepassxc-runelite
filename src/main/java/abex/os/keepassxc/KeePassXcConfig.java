@@ -16,4 +16,11 @@ public interface KeePassXcConfig extends Config
 	{
 		return "";
 	}
+
+	@ConfigItem(
+			keyName = "restoreState",
+			name = "Collapse/close sidebar after fill",
+			description = "Collapse/close the sidebar if it was collapsed/closed before the autofill menu was opened."
+	)
+	default boolean restoreSidebarState() { return true; }
 }
