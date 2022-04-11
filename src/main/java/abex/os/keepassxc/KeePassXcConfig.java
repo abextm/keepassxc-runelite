@@ -16,4 +16,14 @@ public interface KeePassXcConfig extends Config
 	{
 		return "";
 	}
+
+	@ConfigItem(
+		keyName = "autoOpenPanel",
+		name = "Auto open panel",
+		description = "Whether or not to open the sidebar panel on the login screen"
+	)
+	default boolean autoOpenPanel()
+	{
+		return true;
+	}
 }

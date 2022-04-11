@@ -158,7 +158,7 @@ public class KeePassXcPanel extends PluginPanel
 	{
 		revalidate();
 		clientToolbar.addNavigation(button);
-		if (!button.isSelected())
+		if (!button.isSelected() && config.autoOpenPanel())
 		{
 			SwingUtilities.invokeLater(() -> button.getOnSelect().run());
 		}
