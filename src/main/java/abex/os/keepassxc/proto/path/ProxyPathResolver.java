@@ -1,13 +1,12 @@
 package abex.os.keepassxc.proto.path;
 
-import com.google.common.io.CharStreams;
+import com.google.common.base.Strings;
+import com.sun.jna.platform.win32.Advapi32Util;
+import com.sun.jna.platform.win32.Win32Exception;
+import com.sun.jna.platform.win32.WinReg;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.util.OSType;
 import net.runelite.http.api.RuneLiteAPI;
@@ -15,8 +14,6 @@ import net.runelite.http.api.RuneLiteAPI;
 @Slf4j
 public class ProxyPathResolver
 {
-	private static final Pattern ENTRY_REGEX = Pattern.compile(" {4}\\(Default\\) {4}REG_SZ {4}(.*?)\\r?\\n", Pattern.MULTILINE);
-
 	private static String proxyPath;
 
 	private ProxyPathResolver()
@@ -127,34 +124,18 @@ public class ProxyPathResolver
 		}
 	}
 
-
 	private static boolean testWindowsBrowser(String browser)
 	{
-		String regKey = "HKEY_CURRENT_USER\\Software\\" + browser + "\\NativeMessagingHosts\\org.keepassxc.keepassxc_browser";
+		String regKey = "Software\\" + browser + "\\NativeMessagingHosts\\org.keepassxc.keepassxc_browser";
 
 		try
 		{
-			Process regProc = new ProcessBuilder("reg", "query", regKey)
-				.redirectOutput(ProcessBuilder.Redirect.PIPE)
-				.start();
-
-			String regOutput;
-			try (InputStreamReader isr = new InputStreamReader(regProc.getInputStream()))
-			{
-				regOutput = CharStreams.toString(isr);
-			}
-
-			// extract manifest path output
-			Matcher m = ENTRY_REGEX.matcher(regOutput);
-			if (m.find())
-			{
-				return testManifest(new File(m.group(1)));
-			}
-			return false;
+			String manifestFile = Advapi32Util.registryGetStringValue(WinReg.HKEY_CURRENT_USER, regKey, "");
+			return !Strings.isNullOrEmpty(manifestFile) && testManifest(new File(manifestFile));
 		}
-		catch (IOException e)
+		catch (Win32Exception e)
 		{
-			log.warn("Failed to read registry key {}: {}", regKey, e);
+			log.debug("Failed to read registry key {}", regKey);
 			return false;
 		}
 	}
