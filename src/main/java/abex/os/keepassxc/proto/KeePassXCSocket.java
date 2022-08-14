@@ -69,6 +69,9 @@ public class KeePassXCSocket implements Closeable
 		pb.command(keepassProxyPath);
 		pb.redirectInput(ProcessBuilder.Redirect.PIPE);
 		pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
+		// the kpxc AppImage wrapper script checks for this to redirect to the proxy instead of the app
+		// https://github.com/keepassxreboot/keepassxc/blob/a6d3f973fa8449f0f7dac864b3bd3928c29c649f/release-tool#L681
+		pb.environment().put("MOZ_LAUNCHED_CHILD", "1");
 		proc = pb.start();
 		stdin = new LittleEndianDataOutputStream(proc.getOutputStream());
 		stdoutInterrupt = new InterruptableInputStream(proc.getInputStream());
