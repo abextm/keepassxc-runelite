@@ -210,7 +210,7 @@ public class KeePassXCSocket implements Closeable
 		}
 		if (!Arrays.equals(meta.nonce, nonce))
 		{
-			throw new IOException("Nonce mismatch");
+			throw new IOException("Nonce mismatch " + Arrays.toString(meta.nonce) + " != " + Arrays.toString(nonce));
 		}
 
 		return gson.fromJson(resStr, type);
