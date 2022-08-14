@@ -66,7 +66,9 @@ public class KeePassXCSocket implements Closeable
 		}
 
 		ProcessBuilder pb = new ProcessBuilder();
-		pb.command(keepassProxyPath);
+		// the kpxc flatpak checks for the extension's id in the arguments to redirect to the proxy instead of the app
+		// https://github.com/keepassxreboot/keepassxc/blob/a6d3f973fa8449f0f7dac864b3bd3928c29c649f/utils/keepassxc-flatpak-wrapper.sh#L37
+		pb.command(keepassProxyPath, "keepassxc-browser@keepassxc.org");
 		pb.redirectInput(ProcessBuilder.Redirect.PIPE);
 		pb.redirectOutput(ProcessBuilder.Redirect.PIPE);
 		// the kpxc AppImage wrapper script checks for this to redirect to the proxy instead of the app
