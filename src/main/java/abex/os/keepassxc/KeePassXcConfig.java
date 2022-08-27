@@ -26,4 +26,11 @@ public interface KeePassXcConfig extends Config
 	{
 		return true;
 	}
+
+	@ConfigItem(
+			keyName = "hideUsernames",
+			name = "Respect \"Hide username\" option",
+			description = "If the 'hide username' option on the login screen is checked, hide them in the side bar as well"
+	)
+	default boolean hideUsernames() { return true; }
 }

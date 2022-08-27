@@ -109,7 +109,7 @@ public class KeePassXcPanel extends PluginPanel
 	{
 		SwingUtil.fastRemoveAll(this);
 		setLayout(new DynamicGridLayout(0, 1, 0, 0));
-		boolean hideUsernames = client.getPreferences().getHideUsername();
+		boolean hideUsernames = client.getPreferences().getHideUsername() && config.hideUsernames();
 
 		String defaultTitle = config.defaultTitle().trim();
 
