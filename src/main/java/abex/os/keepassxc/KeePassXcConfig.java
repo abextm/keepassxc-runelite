@@ -26,4 +26,21 @@ public interface KeePassXcConfig extends Config
 	{
 		return true;
 	}
+
+	@ConfigItem(
+		keyName = "usernameVisibility",
+		name = "Show usernames",
+		description = "if usernames or titles are shown in the sidebar. Auto respects the login screen's \"Hide usernames\" option"
+	)
+	default UsernameVisibility usernameVisibility()
+	{
+		return UsernameVisibility.AUTO;
+	}
+
+	enum UsernameVisibility
+	{
+		ALWAYS,
+		AUTO,
+		NEVER;
+	}
 }
