@@ -7,6 +7,7 @@ import java.io.InputStream;
 public class InterruptableInputStream extends FilterInputStream
 {
 	private long deadline = 0;
+	private long timeout = 0;
 
 	public InterruptableInputStream(InputStream in)
 	{
@@ -15,12 +16,22 @@ public class InterruptableInputStream extends FilterInputStream
 
 	public void setDeadline(long ms)
 	{
-		deadline = System.nanoTime() + (ms * 1_000_000);
+		timeout = ms * 1_000_000;
+		refreshDeadline();
 	}
 
 	public void clearDeadline()
 	{
+		timeout = 0;
 		deadline = 0;
+	}
+
+	public void refreshDeadline()
+	{
+		if (timeout > 0)
+		{
+			deadline = System.nanoTime() + timeout;
+		}
 	}
 
 	private void check() throws IOException

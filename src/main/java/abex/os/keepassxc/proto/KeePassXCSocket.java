@@ -192,6 +192,7 @@ public class KeePassXCSocket implements Closeable
 		increment(nonce);
 
 		byte[] rs = new byte[stdout.readInt()];
+		stdoutInterrupt.refreshDeadline();
 		stdout.readFully(rs);
 		ResponseWrapper res = gson.fromJson(new String(rs, StandardCharsets.UTF_8), ResponseWrapper.class);
 		if (res.error != null)
