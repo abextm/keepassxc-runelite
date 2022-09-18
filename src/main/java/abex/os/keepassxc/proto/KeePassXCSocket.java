@@ -247,19 +247,20 @@ public class KeePassXCSocket implements Closeable
 				new TypeToken<Map<String, Key>>()
 				{
 				}.getType());
-			k = keyring.get(hash);
-			if (k != null)
-			{
-				call(TestAssociate.ACTION, TestAssociate.Request.builder()
-					.id(k.id)
-					.key(k.key)
-					.build(), TestAssociate.Response.class);
-				return;
-			}
 		}
 		catch (IOException e)
 		{
 			log.info("failed to read keyring", e);
+		}
+
+		k = keyring.get(hash);
+		if (k != null)
+		{
+			call(TestAssociate.ACTION, TestAssociate.Request.builder()
+				.id(k.id)
+				.key(k.key)
+				.build(), TestAssociate.Response.class);
+			return;
 		}
 
 		// can block waiting for user input
