@@ -120,17 +120,12 @@ public class KeePassXcPanel extends PluginPanel
 		{
 			if (!defaultTitle.isEmpty() && e.getName().trim().equalsIgnoreCase(defaultTitle))
 			{
-				client.setPassword(e.getPassword());
-				client.setUsername(e.getLogin());
+				fillCredentials(e);
 			}
 
 			String name = hideUsernames ? e.getName() : e.getLogin();
 			JButton b = new JButton(name);
-			b.addActionListener(_e ->
-			{
-				client.setPassword(e.getPassword());
-				client.setUsername(e.getLogin());
-			});
+			b.addActionListener(_e -> fillCredentials(e));
 			add(b);
 		}
 		open();
@@ -172,5 +167,20 @@ public class KeePassXcPanel extends PluginPanel
 		// clientui doesn't unset selected if we close the panel by removing the navbutton
 		button.setSelected(false);
 		clientToolbar.removeNavigation(button);
+	}
+
+	private void fillCredentials(GetLogins.Entry e)
+	{
+		client.setPassword(e.getPassword());
+		client.setUsername(e.getLogin());
+
+		if (e.getTotp() != null && config.performTotp())
+		{
+			client.setOtp(e.getTotp());
+		}
+		else
+		{
+			client.setOtp("");
+		}
 	}
 }

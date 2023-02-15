@@ -33,5 +33,6 @@ public class GetLogins
 		String login;
 		String name;
 		String password;
+		String totp;
 	}
 }

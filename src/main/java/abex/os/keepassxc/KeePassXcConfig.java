@@ -43,4 +43,14 @@ public interface KeePassXcConfig extends Config
 		AUTO,
 		NEVER;
 	}
+
+	@ConfigItem(
+		keyName = "performTotp",
+		name = "Perform TOTP",
+		description = "If an entry has TOTP configured within the database, auto-fill the TOTP field when prompted."
+	)
+	default boolean performTotp()
+	{
+		return true;
+	}
 }
