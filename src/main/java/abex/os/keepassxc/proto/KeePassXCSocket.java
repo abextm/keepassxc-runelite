@@ -38,11 +38,7 @@ public class KeePassXCSocket implements Closeable
 	private static final int KEY_SIZE = 32;
 	private static final int ID_SIZE = 24;
 
-	private static final Gson gson = new GsonBuilder()
-		.disableHtmlEscaping()
-		.registerTypeHierarchyAdapter(byte[].class, new Base64Adapter())
-		.create();
-
+	private final Gson gson;
 	private final Process proc;
 	private final InterruptableInputStream stdoutInterrupt;
 	private final LittleEndianDataOutputStream stdin;
@@ -57,13 +53,18 @@ public class KeePassXCSocket implements Closeable
 
 	private final SecureRandom secureRandom = new SecureRandom();
 
-	public KeePassXCSocket() throws IOException
+	public KeePassXCSocket(Gson clientGson) throws IOException
 	{
 		String keepassProxyPath = ProxyPathResolver.getKeepassProxyPath();
 		if (keepassProxyPath == null)
 		{
 			throw KeePassException.create(0, "Could not locate keepass-proxy.");
 		}
+
+		this.gson = clientGson.newBuilder()
+			.disableHtmlEscaping()
+			.registerTypeHierarchyAdapter(byte[].class, new Base64Adapter())
+			.create();
 
 		ProcessBuilder pb = new ProcessBuilder();
 		// the kpxc flatpak checks for the extension's id in the arguments to redirect to the proxy instead of the app

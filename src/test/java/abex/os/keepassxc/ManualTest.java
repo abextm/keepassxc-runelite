@@ -2,12 +2,13 @@ package abex.os.keepassxc;
 
 import abex.os.keepassxc.proto.msg.GetLogins;
 import abex.os.keepassxc.proto.KeePassXCSocket;
+import com.google.gson.Gson;
 
 public class ManualTest
 {
 	public static void main(String... args) throws Exception
 	{
-		try (KeePassXCSocket s = new KeePassXCSocket())
+		try (KeePassXCSocket s = new KeePassXCSocket(new Gson()))
 		{
 			s.setDeadline(500);
 			long start = System.currentTimeMillis();

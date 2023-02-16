@@ -5,6 +5,7 @@ import abex.os.keepassxc.proto.msg.GetLogins;
 import abex.os.keepassxc.proto.IOTimeoutException;
 import abex.os.keepassxc.proto.KeePassXCSocket;
 import abex.os.keepassxc.proto.NoLoginsFound;
+import com.google.gson.Gson;
 import java.awt.BorderLayout;
 import java.io.IOException;
 import javax.inject.Inject;
@@ -36,6 +37,9 @@ public class KeePassXcPanel extends PluginPanel
 	private KeePassXcConfig config;
 
 	@Inject
+	private Gson gson;
+
+	@Inject
 	public KeePassXcPanel(Client client, ClientToolbar clientToolbar)
 	{
 		this.client = client;
@@ -57,7 +61,7 @@ public class KeePassXcPanel extends PluginPanel
 		{
 			String message;
 			Throwable ex;
-			try (KeePassXCSocket sock = new KeePassXCSocket())
+			try (KeePassXCSocket sock = new KeePassXCSocket(gson))
 			{
 				sock.setDeadline(500);
 				sock.init();
