@@ -160,16 +160,15 @@ public class KeePassXcPanel extends PluginPanel
 	{
 		revalidate();
 		clientToolbar.addNavigation(button);
-		if (!button.isSelected() && config.autoOpenPanel())
+		if (config.autoOpenPanel())
 		{
-			SwingUtilities.invokeLater(() -> button.getOnSelect().run());
+			SwingUtilities.invokeLater(() -> clientToolbar.openPanel(button));
 		}
 	}
 
 	public void close()
 	{
 		// clientui doesn't unset selected if we close the panel by removing the navbutton
-		button.setSelected(false);
 		clientToolbar.removeNavigation(button);
 	}
 
