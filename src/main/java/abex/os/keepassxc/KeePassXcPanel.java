@@ -26,7 +26,7 @@ import net.runelite.client.util.SwingUtil;
 @Slf4j
 public class KeePassXcPanel extends PluginPanel
 {
-	private static final String URL = "https://secure.runescape.com/";
+	private static final String URL = System.getProperty("keepassxc.url", "https://secure.runescape.com/");
 
 	private final Client client;
 	private final ClientToolbar clientToolbar;
@@ -68,7 +68,7 @@ public class KeePassXcPanel extends PluginPanel
 				sock.clearDeadline();
 				GetLogins.Response r = sock.call(GetLogins.ACTION, GetLogins.Request.builder()
 					.action(GetLogins.ACTION)
-					.url("https://secure.runescape.com/")
+					.url(URL)
 					.keys(sock.getKeys())
 					.build(), GetLogins.Response.class);
 				SwingUtilities.invokeLater(() -> this.open(r));
