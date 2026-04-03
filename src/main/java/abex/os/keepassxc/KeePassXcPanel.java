@@ -61,7 +61,7 @@ public class KeePassXcPanel extends PluginPanel
 		{
 			String message;
 			Throwable ex;
-			try (KeePassXCSocket sock = new KeePassXCSocket(gson))
+			try (KeePassXCSocket sock = new KeePassXCSocket(gson, config.triggerUnlock()))
 			{
 				sock.setDeadline(500);
 				sock.init();

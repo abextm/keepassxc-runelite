@@ -8,7 +8,6 @@ import abex.os.keepassxc.proto.path.ProxyPathResolver;
 import com.google.common.io.LittleEndianDataInputStream;
 import com.google.common.io.LittleEndianDataOutputStream;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.neilalexander.jnacl.NaCl;
 import com.neilalexander.jnacl.crypto.curve25519xsalsa20poly1305;
@@ -39,6 +38,7 @@ public class KeePassXCSocket implements Closeable
 	private static final int ID_SIZE = 24;
 
 	private final Gson gson;
+	private final boolean allowTriggerUnlock;
 	private final Process proc;
 	private final InterruptableInputStream stdoutInterrupt;
 	private final LittleEndianDataOutputStream stdin;
@@ -53,7 +53,7 @@ public class KeePassXCSocket implements Closeable
 
 	private final SecureRandom secureRandom = new SecureRandom();
 
-	public KeePassXCSocket(Gson clientGson) throws IOException
+	public KeePassXCSocket(Gson clientGson, boolean allowTriggerUnlock) throws IOException
 	{
 		String keepassProxyPath = ProxyPathResolver.getKeepassProxyPath();
 		if (keepassProxyPath == null)
@@ -61,6 +61,7 @@ public class KeePassXCSocket implements Closeable
 			throw KeePassException.create(0, "Could not locate keepass-proxy.");
 		}
 
+		this.allowTriggerUnlock = allowTriggerUnlock;
 		this.gson = clientGson.newBuilder()
 			.disableHtmlEscaping()
 			.registerTypeHierarchyAdapter(byte[].class, new Base64Adapter())
@@ -156,6 +157,7 @@ public class KeePassXCSocket implements Closeable
 		byte[] message;
 		byte[] nonce;
 		byte[] clientID;
+		String triggerUnlock;
 	}
 
 	private static class ResponseWrapper
@@ -176,6 +178,13 @@ public class KeePassXCSocket implements Closeable
 
 	public synchronized <T> T call(String action, Object send, Class<T> type) throws IOException
 	{
+		return call(action, send, type, false);
+	}
+
+	public synchronized <T> T call(String action, Object send, Class<T> type, boolean triggerUnlock) throws IOException
+	{
+		boolean unlock = triggerUnlock && this.allowTriggerUnlock;
+
 		byte[] nonce = new byte[ID_SIZE];
 		secureRandom.nextBytes(nonce);
 
@@ -183,7 +192,7 @@ public class KeePassXCSocket implements Closeable
 		byte[] cryptMsgAndGarbage = nacl.encrypt(rawMsg, nonce);
 		byte[] cryptMsg = new byte[cryptMsgAndGarbage.length - curve25519xsalsa20poly1305.crypto_secretbox_BOXZEROBYTES];
 		System.arraycopy(cryptMsgAndGarbage, curve25519xsalsa20poly1305.crypto_secretbox_BOXZEROBYTES, cryptMsg, 0, cryptMsg.length);
-		byte[] wrappedMsg = gson.toJson(new RequestWrapper(action, cryptMsg, nonce, clientID))
+		byte[] wrappedMsg = gson.toJson(new RequestWrapper(action, cryptMsg, nonce, clientID, Boolean.toString(unlock)))
 			.getBytes(StandardCharsets.UTF_8);
 
 		stdin.writeInt(wrappedMsg.length);
@@ -225,7 +234,7 @@ public class KeePassXCSocket implements Closeable
 
 	synchronized void ensureAssociate() throws IOException
 	{
-		GetDatabaseHash.Response hashRes = call(GetDatabaseHash.ACTION, new GetDatabaseHash.Request(), GetDatabaseHash.Response.class);
+		GetDatabaseHash.Response hashRes = call(GetDatabaseHash.ACTION, new GetDatabaseHash.Request(), GetDatabaseHash.Response.class, true);
 		String hash = hashRes.getHash();
 		Key k = keyring.get(hash);
 		if (k != null)
