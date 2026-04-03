@@ -8,7 +8,6 @@ import abex.os.keepassxc.proto.path.ProxyPathResolver;
 import com.google.common.io.LittleEndianDataInputStream;
 import com.google.common.io.LittleEndianDataOutputStream;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.neilalexander.jnacl.NaCl;
 import com.neilalexander.jnacl.crypto.curve25519xsalsa20poly1305;
@@ -25,6 +24,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.RuneLite;
 
@@ -156,6 +157,7 @@ public class KeePassXCSocket implements Closeable
 		byte[] message;
 		byte[] nonce;
 		byte[] clientID;
+		String triggerUnlock;
 	}
 
 	private static class ResponseWrapper
@@ -176,6 +178,11 @@ public class KeePassXCSocket implements Closeable
 
 	public synchronized <T> T call(String action, Object send, Class<T> type) throws IOException
 	{
+		return call(action, send, type, false);
+	}
+
+	public synchronized <T> T call(String action, Object send, Class<T> type, boolean triggerUnlock) throws IOException
+	{
 		byte[] nonce = new byte[ID_SIZE];
 		secureRandom.nextBytes(nonce);
 
@@ -183,7 +190,7 @@ public class KeePassXCSocket implements Closeable
 		byte[] cryptMsgAndGarbage = nacl.encrypt(rawMsg, nonce);
 		byte[] cryptMsg = new byte[cryptMsgAndGarbage.length - curve25519xsalsa20poly1305.crypto_secretbox_BOXZEROBYTES];
 		System.arraycopy(cryptMsgAndGarbage, curve25519xsalsa20poly1305.crypto_secretbox_BOXZEROBYTES, cryptMsg, 0, cryptMsg.length);
-		byte[] wrappedMsg = gson.toJson(new RequestWrapper(action, cryptMsg, nonce, clientID))
+		byte[] wrappedMsg = gson.toJson(new RequestWrapper(action, cryptMsg, nonce, clientID, Boolean.toString(triggerUnlock)))
 			.getBytes(StandardCharsets.UTF_8);
 
 		stdin.writeInt(wrappedMsg.length);
@@ -225,7 +232,7 @@ public class KeePassXCSocket implements Closeable
 
 	synchronized void ensureAssociate() throws IOException
 	{
-		GetDatabaseHash.Response hashRes = call(GetDatabaseHash.ACTION, new GetDatabaseHash.Request(), GetDatabaseHash.Response.class);
+		GetDatabaseHash.Response hashRes = call(GetDatabaseHash.ACTION, new GetDatabaseHash.Request(), GetDatabaseHash.Response.class, true);
 		String hash = hashRes.getHash();
 		Key k = keyring.get(hash);
 		if (k != null)
