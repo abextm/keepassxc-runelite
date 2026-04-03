@@ -24,8 +24,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
-import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.RuneLite;
 
@@ -40,6 +38,7 @@ public class KeePassXCSocket implements Closeable
 	private static final int ID_SIZE = 24;
 
 	private final Gson gson;
+	private final boolean allowTriggerUnlock;
 	private final Process proc;
 	private final InterruptableInputStream stdoutInterrupt;
 	private final LittleEndianDataOutputStream stdin;
@@ -54,7 +53,7 @@ public class KeePassXCSocket implements Closeable
 
 	private final SecureRandom secureRandom = new SecureRandom();
 
-	public KeePassXCSocket(Gson clientGson) throws IOException
+	public KeePassXCSocket(Gson clientGson, boolean allowTriggerUnlock) throws IOException
 	{
 		String keepassProxyPath = ProxyPathResolver.getKeepassProxyPath();
 		if (keepassProxyPath == null)
@@ -62,6 +61,7 @@ public class KeePassXCSocket implements Closeable
 			throw KeePassException.create(0, "Could not locate keepass-proxy.");
 		}
 
+		this.allowTriggerUnlock = allowTriggerUnlock;
 		this.gson = clientGson.newBuilder()
 			.disableHtmlEscaping()
 			.registerTypeHierarchyAdapter(byte[].class, new Base64Adapter())
@@ -183,6 +183,8 @@ public class KeePassXCSocket implements Closeable
 
 	public synchronized <T> T call(String action, Object send, Class<T> type, boolean triggerUnlock) throws IOException
 	{
+		boolean unlock = triggerUnlock && this.allowTriggerUnlock;
+
 		byte[] nonce = new byte[ID_SIZE];
 		secureRandom.nextBytes(nonce);
 
@@ -190,7 +192,7 @@ public class KeePassXCSocket implements Closeable
 		byte[] cryptMsgAndGarbage = nacl.encrypt(rawMsg, nonce);
 		byte[] cryptMsg = new byte[cryptMsgAndGarbage.length - curve25519xsalsa20poly1305.crypto_secretbox_BOXZEROBYTES];
 		System.arraycopy(cryptMsgAndGarbage, curve25519xsalsa20poly1305.crypto_secretbox_BOXZEROBYTES, cryptMsg, 0, cryptMsg.length);
-		byte[] wrappedMsg = gson.toJson(new RequestWrapper(action, cryptMsg, nonce, clientID, Boolean.toString(triggerUnlock)))
+		byte[] wrappedMsg = gson.toJson(new RequestWrapper(action, cryptMsg, nonce, clientID, Boolean.toString(unlock)))
 			.getBytes(StandardCharsets.UTF_8);
 
 		stdin.writeInt(wrappedMsg.length);

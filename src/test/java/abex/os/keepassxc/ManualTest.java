@@ -8,7 +8,7 @@ public class ManualTest
 {
 	public static void main(String... args) throws Exception
 	{
-		try (KeePassXCSocket s = new KeePassXCSocket(new Gson()))
+		try (KeePassXCSocket s = new KeePassXCSocket(new Gson(), false))
 		{
 			s.setDeadline(500);
 			long start = System.currentTimeMillis();

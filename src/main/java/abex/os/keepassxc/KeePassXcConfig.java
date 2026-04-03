@@ -53,4 +53,14 @@ public interface KeePassXcConfig extends Config
 	{
 		return true;
 	}
+
+	@ConfigItem(
+		keyName = "triggerUnlock",
+		name = "Prompt for Database Unlock",
+		description = "If the database is locked when it is accessed, ask it to pop up with an unlock prompt."
+	)
+	default boolean triggerUnlock()
+	{
+		return true;
+	}
 }
